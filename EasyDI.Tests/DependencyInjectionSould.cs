@@ -19,7 +19,7 @@ public class DependencyInjectionShould
         
         dependencyInjection.Inject(empService);
         
-        Assert.True(empService == dependencyInjection.Resolve<EmployeeService>());
+        Assert.True(empService == dependencyInjection.Require<EmployeeService>());
     }
 
     [Fact]
@@ -27,8 +27,8 @@ public class DependencyInjectionShould
     {
         dependencyInjection.Inject<EmployeeService, IEmployee>(oneInstance:false);
 
-        var emp1 = dependencyInjection.Resolve<IEmployee>();
-        var emp2 = dependencyInjection.Resolve<IEmployee>();
+        var emp1 = dependencyInjection.Require<IEmployee>();
+        var emp2 = dependencyInjection.Require<IEmployee>();
         
         Assert.True(emp1 != emp2 );
     }
@@ -38,8 +38,8 @@ public class DependencyInjectionShould
     {
         dependencyInjection.Inject<EmployeeService, IEmployee>(oneInstance:true);
 
-        var emp1 = dependencyInjection.Resolve<IEmployee>();
-        var emp2 = dependencyInjection.Resolve<IEmployee>();
+        var emp1 = dependencyInjection.Require<IEmployee>();
+        var emp2 = dependencyInjection.Require<IEmployee>();
         
         Assert.True(emp1 == emp2 );
     }
