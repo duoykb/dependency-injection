@@ -9,31 +9,35 @@ internal class DependencyInjection : IDependencyInjection
     private readonly Dictionary<Type, Delegate> services = new();
 
     // Todo resolverHelperFix
-    private object ResolverHelper(Type type)    
+    private object RequireHelper(Type type)    
     {
         if (services.ContainsKey(type) is false)
             throw new ServiceNotFoundException(type);
 
         var method = services[type].Method;
 
-        var args = method.GetParameters().Select(parameter => ResolverHelper(parameter.GetType())).ToArray();
+        var args = method.GetParameters().Select(parameter => RequireHelper(parameter.GetType())).ToArray();
 
         return services[type].DynamicInvoke(args) ?? throw new Exception();
     }
-
-    // Todo InstanciateFix
     private object Instantiate<T>()
     {
-        var ctor = typeof(T)
-            .GetTypeInfo()
-            .DeclaredConstructors
-            .MaxBy(ctor => ctor.GetParameters().Length);
+        var constructors = typeof(T).GetTypeInfo().DeclaredConstructors
+            .OrderBy(c => c.GetParameters().Length)
+            .Reverse();
 
-        if (ctor is null) throw new Exception();
+        foreach (var c in constructors)
+        {
+            try
+            {
+                var args = c.GetParameters().Select(pInfo => RequireHelper(pInfo.ParameterType)).ToArray();
+                var instance = c.Invoke(args);
 
-        var args = ctor.GetParameters().Select(info => ResolverHelper(info.ParameterType)).ToArray();
+                return instance;
+            }catch (ServiceNotFoundException){}
+        }
 
-        return ctor.Invoke(args);
+        throw new Exception($"could not create instance of {typeof(T).Name}.");
     }
 
     public void Inject<TService>(TService service) => 
@@ -73,7 +77,7 @@ internal class DependencyInjection : IDependencyInjection
             throw new ArgumentException(
                 "The return type of the factory method must be the same with the given type argument");
 
-        var args = factory.Method.GetParameters().Select(info => ResolverHelper(type)).ToArray();
+        var args = factory.Method.GetParameters().Select(info => RequireHelper(type)).ToArray();
         var service = factory.DynamicInvoke(args);
 
         if (service is null)
@@ -83,6 +87,6 @@ internal class DependencyInjection : IDependencyInjection
     }
 
 
-    public TService Resolve<TService>() =>
-        (TService)ResolverHelper(typeof(TService));
+    public TService Require<TService>() =>
+        (TService)RequireHelper(typeof(TService));
 }
