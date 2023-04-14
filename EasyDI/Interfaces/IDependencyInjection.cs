@@ -44,5 +44,5 @@ public interface IDependencyInjection
     /// </summary>
     /// <typeparam name="TService"></typeparam>
     /// <returns></returns>
-    TService Resolve<TService>();
+    TService Require<TService>();
 }
