@@ -7,8 +7,7 @@ namespace EasyDI;
 internal class DependencyInjection : IDependencyInjection
 {
     private readonly Dictionary<Type, Delegate> services = new();
-
-    // Todo resolverHelperFix
+    
     private object RequireHelper(Type type)    
     {
         if (services.ContainsKey(type) is false)
@@ -67,21 +66,20 @@ internal class DependencyInjection : IDependencyInjection
         else
             services[type] = Instantiate<TService>;
     }
-
-    // Todo InjectFix
+    
     public void Inject<TService>(Delegate factory)
     {
         var type = typeof(TService);
 
         if (type != factory.Method.ReturnType)
             throw new ArgumentException(
-                "The return type of the factory method must be the same with the given type argument");
+                "The return type of the factory method must be the same with the given type argument.");
 
         var args = factory.Method.GetParameters().Select(info => RequireHelper(type)).ToArray();
         var service = factory.DynamicInvoke(args);
 
         if (service is null)
-            throw new Exception();
+            throw new Exception($"Could not create service of {typeof(TService).Name}");
 
         services[type] = ()=> service;
     }
